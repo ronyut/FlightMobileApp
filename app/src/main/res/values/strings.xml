@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">FlightMobileApp</string>
+    <string name="home_textView_connect_description">Connect to a new server:</string>
+    <string name="home_btn_connect">Connect!</string>
+    <string name="home_textbox_url_placeholder">Type URL…</string>
+</resources>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <LinearLayout
+                android:id="@+id/serversBtnsList"
+                android:layout_width="match_parent"
+                android:layout_height="397dp"
+                android:layout_marginVertical="10dp"
+                android:orientation="vertical">
+
+                <Button
+                    android:id="@+id/urlBtn1"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:text="Button 1" />
+
+                <Button
+                    android:id="@+id/urlBtn3"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:text="Button 3" />
+
+                <Button
+                    android:id="@+id/urlBtn5"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:text="Button 5" />
+
+                <Button
+                    android:id="@+id/urlBtn4"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:text="Button 4" />
+
+                <Button
+                    android:id="@+id/urlBtn2"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:text="Button 2" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginVertical="50dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textViewNewServer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/home_textView_connect_description"
+                    android:textAlignment="center"
+                    android:textSize="30sp"
+                    android:visibility="invisible" />
+
+                <LinearLayout
+                    android:id="@+id/linearLayoutNewServer"
+                    android:layout_width="match_parent"
+                    android:layout_height="70dp"
+                    android:layout_marginVertical="10dp"
+                    android:layout_marginBottom="4dp"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/textboxNewServer"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.5"
+                        android:autofillHints="Type URL..."
+                        android:ems="10"
+                        android:hint="@string/home_textbox_url_placeholder"
+                        android:inputType="textUri" />
+
+                    <Button
+                        android:id="@+id/connectBtn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_btn_connect" />
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
