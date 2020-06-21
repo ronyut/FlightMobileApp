@@ -5,6 +5,7 @@ import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.ronyut.flightmobileapp.API.FlightData
+import com.ronyut.flightmobileapp.API.PicassoHandler
 import com.ronyut.flightmobileapp.API.RequestHandler
 import com.ronyut.flightmobileapp.API.ServerUpException
 import com.squareup.picasso.MemoryPolicy
@@ -13,6 +14,7 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_dashboard.*
 import kotlinx.coroutines.*
 import ninja.eigenein.joypad.JoypadView
+import java.util.concurrent.TimeoutException
 import kotlin.math.abs
 
 
@@ -79,14 +81,12 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
                 jobScreenshot?.ensureActive()
                 println("Screenshot active? " + jobScreenshot?.isActive)
                 println("screenshot!")
-                Picasso.get()
-                    .load(baseUrl + RequestHandler.URL_API_SCREENSHOT)
-                    .networkPolicy(NetworkPolicy.NO_CACHE)
-                    .memoryPolicy(MemoryPolicy.NO_CACHE)
-                    .noPlaceholder()
-                    .into(screenshot)
+                PicassoHandler.getImage(baseUrl, screenshot) { msg ->
+                    if (msg != null) {
+                        toast(msg)
+                    }
+                }
                 delay(1000)
-
             }
         }
     }
@@ -106,10 +106,14 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
         jobPost = launch {
             try {
                 val requestHandler = RequestHandler(this@DashboardActivity, baseUrl)
-                requestHandler.postFlightData(flightData) {}
+                requestHandler.postFlightData(flightData) { code ->
+                    if (code != 200) toast(codeToText(code))
+                }
             } catch (e: Exception) {
                 when (e) {
+                    // TODO: check if timeout or other status codes
                     is ServerUpException -> toast(codeToText(e.message?.toInt()))
+                    is TimeoutException -> toast("Server timed out")
                     else -> toast(e.message)
                 }
             }
@@ -122,7 +126,10 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
     private fun codeToText(code: Int?): String {
         return when (code) {
             200 -> "Success"
-            else -> "Fail"
+            304 -> "Headers not modified"
+            400 -> "Invalid parameters"
+            500 -> "FlightGear disconnected"
+            else -> "Something went wrong"
         }
     }
 

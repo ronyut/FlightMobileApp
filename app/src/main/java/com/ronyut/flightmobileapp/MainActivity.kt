@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.toolbox.Volley
 import com.ronyut.flightmobileapp.API.FlightData
+import com.ronyut.flightmobileapp.API.PicassoHandler
 import com.ronyut.flightmobileapp.API.RequestHandler
 import com.ronyut.flightmobileapp.API.ServerUpException
 import kotlinx.android.synthetic.main.activity_main.*
@@ -32,18 +33,37 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         job = Job()
         supportActionBar?.hide()
 
+        setConnectBtnListener()
+    }
+
+    // set the connection button listener
+    private fun setConnectBtnListener() {
         connectBtn.setOnClickListener {
             baseUrl = textboxNewServer.text.toString()
             toggleButton(true)
 
-            if (!isValidUrl(baseUrl)) {
-                toast("Invalid URL")
-                toggleButton(false)
-            } else {
-                checkConnection()
-            }
+            if (checkUrlValidity()) checkConnection()
+        }
+    }
+
+    /*
+    Check if url is valid and show toast
+     */
+    private fun checkUrlValidity(): Boolean {
+        var err = ""
+
+        if (!isValidUrl(baseUrl)) {
+            err = "Invalid URL"
+        } else if (baseUrl.last().toString() == "/") {
+            err = "Please remove trailing slash from URL"
         }
 
+        if (err != "") {
+            toast(err)
+            toggleButton(false)
+        }
+
+        return err == ""
     }
 
     /*
@@ -51,22 +71,17 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
      */
     private fun checkConnection() {
         launch {
-            try {
-                val flightData =
-                    FlightData(0.0, 0.0, 0.0, 0.0)
-                val requestHandler = RequestHandler(this@MainActivity, baseUrl)
-                requestHandler.postFlightData(flightData) {
+            PicassoHandler.getImage(baseUrl, screenshotTest) { msg ->
+                toggleButton(false)
+
+                if (msg != null) {
+                    toast(msg) // TODO: changed to "server offline"
+                } else {
+                    saveUrl()
+                    // TODO: refresh buttons - url updates
+
                     connectionSuccessful("200")
                 }
-            } catch (e: Exception) {
-                when (e) {
-                    is ServerUpException -> connectionSuccessful(e.message)
-                    else -> toast("Server offline " + e.message)
-                }
-            } finally {
-                toggleButton(false)
-                // TODO: refresh buttons - url updates
-                saveUrl()
             }
         }
     }

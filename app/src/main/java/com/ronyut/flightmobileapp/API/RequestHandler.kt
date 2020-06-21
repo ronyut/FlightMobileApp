@@ -16,34 +16,43 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
     // Instantiate the RequestQueue.
     private val queue: RequestQueue = Volley.newRequestQueue(context)
 
-    suspend fun postFlightData(flightData: FlightData, onResult: () -> Unit): Unit =
+    suspend fun postFlightData(flightData: FlightData, onResult: (Int) -> Unit): Unit =
         suspendCoroutine { cont ->
             val url = baseUrl + URL_API_COMMAND
             println(">> URL: $url")
 
             // Send a json post request
             val requestJson = makeJson(flightData)
-            val stringRequest = MyJsonObjectRequest(
+            val request = MyJsonObjectRequest(
                 Request.Method.POST, url, requestJson,
                 Response.Listener {
-                    onResult()
+                    // get status code
+                    onResult(it.getString("code").toInt())
                 },
                 Response.ErrorListener {
                     println(it.message)
                     if (it.networkResponse?.statusCode == null) {
                         cont.resumeWithException(Exception(it.message))
                     } else {
+                        // Server responded
                         cont.resumeWithException(
-                            ServerUpException(
-                                it.networkResponse.statusCode.toString()
-                            )
+                            ServerUpException(it.networkResponse.statusCode.toString())
                         )
                     }
                 })
 
+            // set timeout to 10 seconds
+            val policy = DefaultRetryPolicy(
+                10000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            )
+            request.retryPolicy = policy;
+
             // Add the request to the RequestQueue.
-            queue.add(stringRequest)
+            queue.add(request)
         }
+
 
     private fun makeJson(flightData: FlightData): JSONObject {
         val json = JSONObject()
