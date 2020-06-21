@@ -6,13 +6,14 @@ import android.webkit.URLUtil.isValidUrl
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.toolbox.Volley
+import com.ronyut.flightmobileapp.API.FlightData
 import com.ronyut.flightmobileapp.API.RequestHandler
+import com.ronyut.flightmobileapp.API.ServerUpException
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 import kotlin.coroutines.CoroutineContext
 
 class MainActivity : AppCompatActivity(), CoroutineScope {
@@ -51,7 +52,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     private fun checkConnection() {
         launch {
             try {
-                val flightData = FlightData(0.0, 0.0, 0.0, 0.0)
+                val flightData =
+                    FlightData(0.0, 0.0, 0.0, 0.0)
                 val requestHandler = RequestHandler(this@MainActivity, baseUrl)
                 requestHandler.postFlightData(flightData) {
                     connectionSuccessful("200")

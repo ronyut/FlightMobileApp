@@ -4,8 +4,6 @@ import android.content.Context
 import com.android.volley.*
 import com.android.volley.toolbox.*
 import kotlin.coroutines.suspendCoroutine
-import com.ronyut.flightmobileapp.FlightData
-import com.ronyut.flightmobileapp.ServerUpException
 import org.json.JSONObject
 import kotlin.coroutines.resumeWithException
 
@@ -35,7 +33,11 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
                     if (it.networkResponse?.statusCode == null) {
                         cont.resumeWithException(Exception(it.message))
                     } else {
-                        cont.resumeWithException(ServerUpException(it.networkResponse.statusCode.toString()))
+                        cont.resumeWithException(
+                            ServerUpException(
+                                it.networkResponse.statusCode.toString()
+                            )
+                        )
                     }
                 })
 

@@ -1,4 +1,4 @@
-package com.ronyut.flightmobileapp
+package com.ronyut.flightmobileapp.API
 
 data class FlightData(
     val aileron: Double? = null,

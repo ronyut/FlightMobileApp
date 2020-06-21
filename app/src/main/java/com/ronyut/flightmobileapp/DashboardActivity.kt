@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.ronyut.flightmobileapp.API.FlightData
 import com.ronyut.flightmobileapp.API.RequestHandler
+import com.ronyut.flightmobileapp.API.ServerUpException
 import com.squareup.picasso.MemoryPolicy
 import com.squareup.picasso.NetworkPolicy
 import com.squareup.picasso.Picasso
@@ -94,7 +96,12 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
      */
     private fun sendFlightData() {
         val flightData =
-            FlightData(aileron, elevator, rudder, throttle)
+            FlightData(
+                aileron,
+                elevator,
+                rudder,
+                throttle
+            )
 
         jobPost = launch {
             try {
