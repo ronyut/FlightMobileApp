@@ -51,7 +51,9 @@ public abstract class UrlRoomDB : RoomDatabase() {
         suspend fun populateDatabase(urlDao: UrlDao) {
             val toAdd = urlDao.getLastUrls().value?.size ?: 5
             for (i in 0 until toAdd) {
+                println("insert to DB sample")
                 val url = Url("Sample ${i + 1}", "now")
+                println("Url: " + url.url + " " + url.date)
                 urlDao.insert(url)
             }
         }

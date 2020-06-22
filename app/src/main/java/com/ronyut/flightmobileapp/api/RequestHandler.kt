@@ -12,6 +12,7 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
     companion object {
         const val URL_API_COMMAND = "/api/command"
         const val URL_API_SCREENSHOT = "/screenshot"
+        const val TIMEOUT_MS = 3305
     }
 
     // Instantiate the RequestQueue.
@@ -31,8 +32,9 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
                     onResult(it?.getString("code")?.toInt())
                 },
                 Response.ErrorListener { err ->
+                    val time = err.networkTimeMs / 1000
                     val e = when {
-                        err.networkTimeMs > 9500 -> TimeoutException("Intermediate server timed out")
+                        err.networkTimeMs > 9500 -> TimeoutException("Intermediate server timed out ($time seconds)")
                         err.networkResponse?.statusCode == null -> Exception(err.message)
                         else -> ServerUpException(err.networkResponse.statusCode.toString())
                     }
@@ -41,11 +43,11 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
 
             // set timeout to 10 seconds
             val policy = DefaultRetryPolicy(
-                3305, // actually 10 seconds
+                TIMEOUT_MS, // actually 10 seconds
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
             )
-            request.retryPolicy = policy;
+            request.retryPolicy = policy
 
             // Add the request to the RequestQueue.
             queue.add(request)

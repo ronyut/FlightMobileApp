@@ -11,7 +11,6 @@ import com.ronyut.flightmobileapp.api.ServerUpException
 import kotlinx.android.synthetic.main.activity_dashboard.*
 import kotlinx.coroutines.*
 import ninja.eigenein.joypad.JoypadView
-import java.util.concurrent.TimeoutException
 import kotlin.math.abs
 
 
@@ -25,11 +24,14 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
     private var rudder: Double = 0.0
     private var throttle: Double = 0.5
 
+    private var imageLoaded = true
+    private lateinit var toaster: Toaster
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
         supportActionBar?.hide()
+        toaster = Toaster(applicationContext)
 
         // get base api URL
         when (val url = intent.getStringExtra(MainActivity.EXTRA_MESSAGE)) {
@@ -59,9 +61,10 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
         cancel()
     }
 
-    // resume job to resume getting screenshots when app is maximized
-    override fun onStart() {
-        super.onStart()
+    // resume job to resume getting screenshots when activity is brought back to background
+    override fun onRestart() {
+        super.onRestart()
+        println("Dashboard restarted")
         jobScreenshot = Job()
         getScreenshot()
     }
@@ -70,16 +73,22 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
     An async function for getting a screenshot
      */
     private fun getScreenshot() {
-        // TODO: update the screenshot every second
+        val picasso = PicassoHandler(this)
         // run the co-routine to get a screenshot
         jobScreenshot = launch {
             while (true) {
                 jobScreenshot?.ensureActive()
-                println("Screenshot active? " + jobScreenshot?.isActive)
-                println("screenshot!")
-                PicassoHandler.getImage(baseUrl, screenshot) { msg ->
-                    if (msg != null) toast(msg)
+
+                if (imageLoaded) {
+                    println("screenshot!")
+
+                    imageLoaded = false
+                    picasso.getImage(baseUrl, screenshot) { msg ->
+                        if (msg != null) toast(msg)
+                        imageLoaded = true
+                    }
                 }
+
                 delay(1000)
             }
         }
@@ -104,13 +113,6 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
                 }
             }
         }
-    }
-
-    /*
-    Make a toast
-     */
-    private fun toast(text: String?) {
-        Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()
     }
 
     /*
@@ -167,5 +169,9 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+    }
+
+    private fun toast(text: String?) {
+        toaster.toast(text)
     }
 }

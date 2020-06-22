@@ -16,14 +16,15 @@ import com.ronyut.flightmobileapp.room.UrlViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
 // TODO:
-//  save url +
-//  check if `/` at the end erroring
+//  save url
 //  landscape view
 //  vertical taskbar
-//  check timeout erroring (screenshot + command)
+//  DONE                                                    check timeout erroring (screenshot)
 //  Update buttons on resume in this page
-
-class MainActivity : AppCompatActivity()/*, CoroutineScope by MainScope() ToDO */ {
+//  sarah server + john server
+//  coding style
+//  resolve all todos
+class MainActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_MESSAGE = "com.ronyut.flightmobileapp.URL"
         const val NO_ERROR = ""
@@ -31,7 +32,6 @@ class MainActivity : AppCompatActivity()/*, CoroutineScope by MainScope() ToDO *
 
     private lateinit var urlViewModel: UrlViewModel
     private var baseUrl = ""
-    //private var job: Job? = Job() TODO
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +74,12 @@ class MainActivity : AppCompatActivity()/*, CoroutineScope by MainScope() ToDO *
                 }
             }
         }
+
+        testBtn.setOnClickListener {
+            val url = testBtn.text.toString()
+            saveUrl(url)
+            toast("added $url")
+        }
     }
 
     /*
@@ -97,8 +103,8 @@ class MainActivity : AppCompatActivity()/*, CoroutineScope by MainScope() ToDO *
     Check if the server is up
      */
     private fun checkConnection() {
-        //launch {
-        PicassoHandler.getImage(baseUrl, screenshotTest) { msg ->
+        val picasso = PicassoHandler(this)
+        picasso.getImage(baseUrl, screenshotTest) { msg ->
             toggleButton(false)
 
             if (msg != null) {
@@ -108,7 +114,6 @@ class MainActivity : AppCompatActivity()/*, CoroutineScope by MainScope() ToDO *
                 connectionSuccessful()
             }
         }
-        //}
     }
 
     /*
@@ -137,9 +142,9 @@ class MainActivity : AppCompatActivity()/*, CoroutineScope by MainScope() ToDO *
     /*
     Save the url in the database
      */
-    private fun saveUrl() {
-        val url = Url(baseUrl, "now")
-        urlViewModel.insert(url)
+    private fun saveUrl(url: String = baseUrl) {
+        val link = Url(url, "now") // TODO CHANGE `NOW`
+        urlViewModel.insert(link)
     }
 
     /*
@@ -157,11 +162,5 @@ class MainActivity : AppCompatActivity()/*, CoroutineScope by MainScope() ToDO *
      */
     private fun toast(text: String?) {
         Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()
-    }
-
-    // cancel job to stop getting screenshots when app is minimized
-    override fun onDestroy() {
-        super.onDestroy()
-        //cancel() TODO
     }
 }
