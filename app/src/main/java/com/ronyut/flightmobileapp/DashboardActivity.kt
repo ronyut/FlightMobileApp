@@ -4,13 +4,10 @@ import android.os.Bundle
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.ronyut.flightmobileapp.API.FlightData
-import com.ronyut.flightmobileapp.API.PicassoHandler
-import com.ronyut.flightmobileapp.API.RequestHandler
-import com.ronyut.flightmobileapp.API.ServerUpException
-import com.squareup.picasso.MemoryPolicy
-import com.squareup.picasso.NetworkPolicy
-import com.squareup.picasso.Picasso
+import com.ronyut.flightmobileapp.api.FlightData
+import com.ronyut.flightmobileapp.api.PicassoHandler
+import com.ronyut.flightmobileapp.api.RequestHandler
+import com.ronyut.flightmobileapp.api.ServerUpException
 import kotlinx.android.synthetic.main.activity_dashboard.*
 import kotlinx.coroutines.*
 import ninja.eigenein.joypad.JoypadView
@@ -24,8 +21,8 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
     private var jobPost: Job? = Job()
 
     private var aileron: Double = 0.0
-    private var rudder: Double = 0.0
     private var elevator: Double = 0.0
+    private var rudder: Double = 0.0
     private var throttle: Double = 0.5
 
 
@@ -36,10 +33,9 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
 
         // get base api URL
         when (val url = intent.getStringExtra(MainActivity.EXTRA_MESSAGE)) {
-            null -> toast("invalid Url")
+            null -> toast("Could not fetch URL") // impossible
             else -> baseUrl = url
         }
-
         setListeners()
     }
 
@@ -53,7 +49,7 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
     // cancel job to stop getting screenshots when app is minimized
     override fun onStop() {
         super.onStop()
-        println("BACKGROUND")
+        println("Dashboard stopped")
         jobScreenshot?.cancel()
     }
 
@@ -82,9 +78,7 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
                 println("Screenshot active? " + jobScreenshot?.isActive)
                 println("screenshot!")
                 PicassoHandler.getImage(baseUrl, screenshot) { msg ->
-                    if (msg != null) {
-                        toast(msg)
-                    }
+                    if (msg != null) toast(msg)
                 }
                 delay(1000)
             }
@@ -95,41 +89,20 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
     Post the flight data and makes a toast in case of error
      */
     private fun sendFlightData() {
-        val flightData =
-            FlightData(
-                aileron,
-                elevator,
-                rudder,
-                throttle
-            )
+        val flightData = FlightData(aileron, elevator, rudder, throttle)
 
         jobPost = launch {
             try {
                 val requestHandler = RequestHandler(this@DashboardActivity, baseUrl)
                 requestHandler.postFlightData(flightData) { code ->
-                    if (code != 200) toast(codeToText(code))
+                    if (code != 200) toast(Util.codeToText(code))
                 }
             } catch (e: Exception) {
                 when (e) {
-                    // TODO: check if timeout or other status codes
-                    is ServerUpException -> toast(codeToText(e.message?.toInt()))
-                    is TimeoutException -> toast("Server timed out")
-                    else -> toast(e.message)
+                    is ServerUpException -> toast(Util.codeToText(e.message?.toInt()))
+                    else -> toast(e.message + Util.CONSIDER_TEXT)
                 }
             }
-        }
-    }
-
-    /*
-    Convert a status code into an explanatory string
-     */
-    private fun codeToText(code: Int?): String {
-        return when (code) {
-            200 -> "Success"
-            304 -> "Headers not modified"
-            400 -> "Invalid parameters"
-            500 -> "FlightGear disconnected"
-            else -> "Something went wrong"
         }
     }
 
@@ -143,7 +116,10 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
     /*
     When the joystick handle is released
      */
-    override fun onUp() {}
+    override fun onUp() {
+        aileron = 0.0
+        elevator = 0.0
+    }
 
     /*
     When the joystick handle is being moved

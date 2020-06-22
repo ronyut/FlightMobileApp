@@ -1,4 +1,4 @@
-package com.ronyut.flightmobileapp.API
+package com.ronyut.flightmobileapp.api
 
 import android.widget.ImageView
 import com.squareup.picasso.MemoryPolicy

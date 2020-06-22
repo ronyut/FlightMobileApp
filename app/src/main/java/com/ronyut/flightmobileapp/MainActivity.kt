@@ -5,35 +5,59 @@ import android.os.Bundle
 import android.webkit.URLUtil.isValidUrl
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.android.volley.toolbox.Volley
-import com.ronyut.flightmobileapp.API.FlightData
-import com.ronyut.flightmobileapp.API.PicassoHandler
-import com.ronyut.flightmobileapp.API.RequestHandler
-import com.ronyut.flightmobileapp.API.ServerUpException
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.ronyut.flightmobileapp.api.PicassoHandler
+import com.ronyut.flightmobileapp.room.Url
+import com.ronyut.flightmobileapp.room.UrlListAdapter
+import com.ronyut.flightmobileapp.room.UrlViewModel
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 
-class MainActivity : AppCompatActivity(), CoroutineScope {
+// TODO:
+//  save url +
+//  check if `/` at the end erroring
+//  landscape view
+//  vertical taskbar
+//  check timeout erroring (screenshot + command)
+//  Update buttons on resume in this page
+
+class MainActivity : AppCompatActivity()/*, CoroutineScope by MainScope() ToDO */ {
     companion object {
         const val EXTRA_MESSAGE = "com.ronyut.flightmobileapp.URL"
+        const val NO_ERROR = ""
     }
 
+    private lateinit var urlViewModel: UrlViewModel
     private var baseUrl = ""
-    private lateinit var job: Job
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
+    //private var job: Job? = Job() TODO
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        job = Job()
         supportActionBar?.hide()
 
+        setRecycleView()
         setConnectBtnListener()
+    }
+
+    private fun setRecycleView() {
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerview)
+        val adapter = UrlListAdapter(this)
+        recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        //urlViewModel = ViewModelProvider(this).get(UrlViewModel::class.java)
+        urlViewModel = ViewModelProvider(
+            this,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(this.application)
+        ).get(UrlViewModel::class.java)
+
+        urlViewModel.allUrls.observe(this, Observer { urls ->
+            // Update the cached copy of the urls in the adapter.
+            urls?.let { adapter.setUrls(it) }
+        })
     }
 
     // set the connection button listener
@@ -42,54 +66,56 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             baseUrl = textboxNewServer.text.toString()
             toggleButton(true)
 
-            if (checkUrlValidity()) checkConnection()
-        }
-    }
-
-    /*
-    Check if url is valid and show toast
-     */
-    private fun checkUrlValidity(): Boolean {
-        var err = ""
-
-        if (!isValidUrl(baseUrl)) {
-            err = "Invalid URL"
-        } else if (baseUrl.last().toString() == "/") {
-            err = "Please remove trailing slash from URL"
-        }
-
-        if (err != "") {
-            toast(err)
-            toggleButton(false)
-        }
-
-        return err == ""
-    }
-
-    /*
-    Check if the server is up
-     */
-    private fun checkConnection() {
-        launch {
-            PicassoHandler.getImage(baseUrl, screenshotTest) { msg ->
-                toggleButton(false)
-
-                if (msg != null) {
-                    toast(msg) // TODO: changed to "server offline"
-                } else {
-                    saveUrl()
-                    // TODO: refresh buttons - url updates
-
-                    connectionSuccessful("200")
+            when (val err = checkUrlValidity()) {
+                NO_ERROR -> checkConnection()
+                else -> {
+                    toast(err)
+                    toggleButton(false)
                 }
             }
         }
     }
 
     /*
+    Check if url is valid and show toast
+     */
+    private fun checkUrlValidity(): String {
+        var err = NO_ERROR
+
+        if (baseUrl == "") {
+            err = "Empty URL"
+        } else if (!isValidUrl(baseUrl)) {
+            err = "Invalid URL"
+        } else if (baseUrl.last().toString() == "/") {
+            err = "Please remove trailing slash from URL"
+        }
+
+        return err
+    }
+
+    /*
+    Check if the server is up
+     */
+    private fun checkConnection() {
+        //launch {
+        PicassoHandler.getImage(baseUrl, screenshotTest) { msg ->
+            toggleButton(false)
+
+            if (msg != null) {
+                toast(msg) // TODO: change to "server offline" / timeout
+            } else {
+                saveUrl()
+                connectionSuccessful()
+            }
+        }
+        //}
+    }
+
+    /*
     If the server is online, go to the dashboard
      */
-    private fun connectionSuccessful(code: String?) {
+    private fun connectionSuccessful() {
+        saveUrl()
         toggleButton(false)
         // move to dashboard activity
         moveToDashboard()
@@ -112,8 +138,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     Save the url in the database
      */
     private fun saveUrl() {
-        // TODO: save url in db
-        val queue = Volley.newRequestQueue(this)
+        val url = Url(baseUrl, "now")
+        urlViewModel.insert(url)
     }
 
     /*
@@ -133,8 +159,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()
     }
 
+    // cancel job to stop getting screenshots when app is minimized
     override fun onDestroy() {
         super.onDestroy()
-        job.cancel()
+        //cancel() TODO
     }
 }

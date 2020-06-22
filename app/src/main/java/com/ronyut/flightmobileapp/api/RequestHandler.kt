@@ -1,10 +1,11 @@
-package com.ronyut.flightmobileapp.API
+package com.ronyut.flightmobileapp.api
 
 import android.content.Context
 import com.android.volley.*
 import com.android.volley.toolbox.*
 import kotlin.coroutines.suspendCoroutine
 import org.json.JSONObject
+import java.util.concurrent.TimeoutException
 import kotlin.coroutines.resumeWithException
 
 class RequestHandler(context: Context, private val baseUrl: String?) {
@@ -16,7 +17,7 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
     // Instantiate the RequestQueue.
     private val queue: RequestQueue = Volley.newRequestQueue(context)
 
-    suspend fun postFlightData(flightData: FlightData, onResult: (Int) -> Unit): Unit =
+    suspend fun postFlightData(flightData: FlightData, onResult: (Int?) -> Unit): Unit =
         suspendCoroutine { cont ->
             val url = baseUrl + URL_API_COMMAND
             println(">> URL: $url")
@@ -27,23 +28,20 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
                 Request.Method.POST, url, requestJson,
                 Response.Listener {
                     // get status code
-                    onResult(it.getString("code").toInt())
+                    onResult(it?.getString("code")?.toInt())
                 },
-                Response.ErrorListener {
-                    println(it.message)
-                    if (it.networkResponse?.statusCode == null) {
-                        cont.resumeWithException(Exception(it.message))
-                    } else {
-                        // Server responded
-                        cont.resumeWithException(
-                            ServerUpException(it.networkResponse.statusCode.toString())
-                        )
+                Response.ErrorListener { err ->
+                    val e = when {
+                        err.networkTimeMs > 9500 -> TimeoutException("Intermediate server timed out")
+                        err.networkResponse?.statusCode == null -> Exception(err.message)
+                        else -> ServerUpException(err.networkResponse.statusCode.toString())
                     }
+                    cont.resumeWithException(e)
                 })
 
             // set timeout to 10 seconds
             val policy = DefaultRetryPolicy(
-                10000,
+                3305, // actually 10 seconds
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
             )
