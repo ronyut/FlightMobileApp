@@ -7,67 +7,73 @@ import com.ronyut.flightmobileapp.Util
 import kotlin.coroutines.suspendCoroutine
 import org.json.JSONObject
 import java.io.IOException
-import java.util.concurrent.TimeoutException
-import kotlin.coroutines.resumeWithException
 
+/*
+    This class is responsible for handling json POST requests to the server
+    Author: Rony Utevsky
+    Date: 23-06-2020
+ */
 class RequestHandler(context: Context, private val baseUrl: String?) {
+    private val queue: RequestQueue = Volley.newRequestQueue(context)
+
     companion object {
         const val URL_API_COMMAND = "/api/command"
         const val URL_API_SCREENSHOT = "/screenshot"
         const val TIMEOUT_MS = 3305
+        const val MAX_NETWORK_TIME_MS = 9500
+        const val CODE_SUCCESS = 200
     }
 
-    // Instantiate the RequestQueue.
-    private val queue: RequestQueue = Volley.newRequestQueue(context)
-
+    // Post Flight data to server
     suspend fun postFlightData(flightData: FlightData, onResult: (String?, Boolean) -> Unit): Unit =
         suspendCoroutine {
             val url = baseUrl + URL_API_COMMAND
-            println(">> URL: $url")
 
             // Send a json post request
             val requestJson = makeJson(flightData)
-            val request = MyJsonObjectRequest(
+            var request = MyJsonObjectRequest(
                 Request.Method.POST, url, requestJson,
                 Response.Listener {
                     // get status code
                     val code = it?.getString("code")?.toInt()
                     var isSuccess = true
-                    if (code != 200) isSuccess = false
+                    if (code != CODE_SUCCESS) isSuccess = false
                     onResult(Util.codeToText(code), isSuccess)
                 },
                 Response.ErrorListener { err ->
-                    val code = err?.networkResponse?.statusCode?.toInt()
-                    val e = when {
-                        err.networkTimeMs > 9500 -> TimeoutException("Intermediate server timed out")
-                        err is IOException -> Exception("Could not receive server's response")
-                        code != null -> Exception(Util.codeToText(code))
-                        else -> Exception("Corrupt response from server")
+                    val code = err?.networkResponse?.statusCode
+                    val msg = when {
+                        err.networkTimeMs > MAX_NETWORK_TIME_MS -> "Intermediate server timed out"
+                        err is IOException -> "Could not receive server's response"
+                        code != null -> Util.codeToText(code)
+                        else -> "Corrupt response from server"
                     }
-                    //cont.resumeWithException(e)
-                    onResult(e.message, false)
+                    onResult(msg, false)
                 })
 
-            // set timeout to 10 seconds
-            val policy = DefaultRetryPolicy(
-                TIMEOUT_MS, // actually 10 seconds
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            )
-            request.retryPolicy = policy
+            request = prepareTimeoutPolicy(request)
 
             // Add the request to the RequestQueue.
             queue.add(request)
         }
 
-
-    private fun makeJson(flightData: FlightData): JSONObject {
-        val json = JSONObject()
-        json.put("aileron", flightData.aileron)
-        json.put("rudder", flightData.rudder)
-        json.put("throttle", flightData.throttle)
-        json.put("elevator", flightData.elevator)
-
-        return json
+    // Set the request's policy so it will timeout after 10 seconds
+    private fun prepareTimeoutPolicy(request: MyJsonObjectRequest): MyJsonObjectRequest {
+        val policy = DefaultRetryPolicy(
+            TIMEOUT_MS,
+            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+        request.retryPolicy = policy
+        return request
     }
+
+    // Prepare the json that will be sent
+    private fun makeJson(flightData: FlightData) =
+        JSONObject()
+            .put("aileron", flightData.aileron)
+            .put("rudder", flightData.rudder)
+            .put("throttle", flightData.throttle)
+            .put("elevator", flightData.elevator)
+
 }

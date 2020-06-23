@@ -7,6 +7,11 @@ import com.android.volley.toolbox.HttpHeaderParser
 import com.android.volley.toolbox.JsonRequest
 import org.json.JSONObject
 
+/*
+    Custom JsonObjectRequest that return a json with the server's response code
+    Author: Rony Utevsky
+    Date: 23-06-2020
+ */
 class MyJsonObjectRequest(
     method: Int,
     url: String?,

@@ -4,23 +4,16 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.ronyut.flightmobileapp.api.PicassoHandler
-import com.ronyut.flightmobileapp.room.UrlViewModel
+import com.ronyut.flightmobileapp.room.UrlDbManager
 import kotlinx.android.synthetic.main.activity_main.*
 
-// TODO:
-//  VVVVVVVVVVVVVVVVVVVVsave url
-//  VVVVVVVVVVV landscape view
-//  VVVVVVVVVVVVVVVVVVVvertical taskbar
-//  VVVVVVVVVVVVVVVVVVVVVV       check timeout erroring (screenshot)
-//  VVVVVVVVVV Update buttons on resume in this page
-//  VVVVVVVVVVV sarah server + john server
-//  coding style
-//  VVVVVVVVVVVVVV resolve all todos
-//  comments
-
+/*
+    The main activity: connect to a server
+    Author: Rony Utevsky
+    Date: 23-06-2020
+ */
 class MainActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_MESSAGE = "com.ronyut.flightmobileapp.URL"
@@ -34,48 +27,17 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Hide the annoying and redundant action bar
         supportActionBar?.hide()
+        // Set up the room database manager that will hold the urls
         db = UrlDbManager(applicationContext)
+        // create the toaster that manages all toasts
         toaster = Toaster(applicationContext)
-
+        // update the buttons with the urls from db
         updateView()
-        setConnectBtnListener()
-    }
-
-    // set the connection button listener
-    private fun setConnectBtnListener() {
-        connectBtn.setOnClickListener {
-            baseUrl = textboxNewServer.text.toString()
-            toggleButton(true)
-
-            when (val err = Util.checkUrlValidity(baseUrl)) {
-                NO_ERROR -> checkConnection()
-                else -> {
-                    toast(err)
-                    toggleButton(false)
-                }
-            }
-        }
-
-        btn1.setOnClickListener {
-            textboxNewServer.setText(btn1.text)
-        }
-
-        btn2.setOnClickListener {
-            textboxNewServer.setText(btn2.text)
-        }
-
-        btn3.setOnClickListener {
-            textboxNewServer.setText(btn3.text)
-        }
-
-        btn4.setOnClickListener {
-            textboxNewServer.setText(btn4.text)
-        }
-
-        btn5.setOnClickListener {
-            textboxNewServer.setText(btn5.text)
-        }
+        // set the listeners
+        setListeners()
     }
 
     /*
@@ -85,10 +47,9 @@ class MainActivity : AppCompatActivity() {
         val picasso = PicassoHandler(this)
         picasso.getImage(baseUrl, screenshotTest) { msg ->
             toggleButton(false)
-            if (msg != null) {
-                toast("Server unavailable")
-            } else {
-                connectionSuccessful()
+            when {
+                msg != null -> toast("Server unavailable")
+                else -> connectionSuccessful()
             }
         }
     }
@@ -98,7 +59,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun connectionSuccessful() {
         toast("Connected! Loading...")
-        saveUrl()
+        saveUrlToDb()
         toggleButton(false)
         // move to dashboard activity
         moveToDashboard()
@@ -110,26 +71,26 @@ class MainActivity : AppCompatActivity() {
     private fun toggleButton(disable: Boolean) {
         if (disable) {
             connectBtn.isEnabled = false
-            connectBtn.text = "Wait..."
+            connectBtn.text = getString(R.string.connect_btn_text_please_wait)
         } else {
             connectBtn.isEnabled = true
-            connectBtn.text = "CONNECT!"
+            connectBtn.text = getString(R.string.home_btn_connect)
         }
     }
 
     /*
     Save the url in the database
      */
-    private fun saveUrl(url: String = baseUrl) {
+    private fun saveUrlToDb() {
         db.addUrl(baseUrl)
         updateView()
     }
 
+    // Update the buttons with the urls from db
     private fun updateView() {
         val urls = db.getDb()
         var last = 0
         for ((i, url) in urls.withIndex()) {
-            println("Make visible: ${i + 1}")
             when (i + 1) {
                 1 -> setBtn(btn1, url)
                 2 -> setBtn(btn2, url)
@@ -140,8 +101,8 @@ class MainActivity : AppCompatActivity() {
             last = i + 1
         }
 
+        // Handle remaining buttons
         for (i in last + 1 until 6) {
-            println("Make Gone: $i")
             when (i) {
                 1 -> setBtn(btn1, "", View.GONE)
                 2 -> setBtn(btn2, "", View.GONE)
@@ -152,6 +113,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Set button text and visibility
     private fun setBtn(btn: Button, url: String, view: Int = View.VISIBLE) {
         btn.text = url
         btn.visibility = view
@@ -165,6 +127,37 @@ class MainActivity : AppCompatActivity() {
             putExtra(EXTRA_MESSAGE, baseUrl)
         }
         startActivity(intent)
+    }
+
+    // Set all the listeners on this activity
+    private fun setListeners() {
+        setConnectBtnListener()
+        setUrlButtonListeners()
+    }
+
+    // Set the listener for the url buttons
+    private fun setUrlButtonListeners() {
+        btn1.setOnClickListener { textboxNewServer.setText(btn1.text) }
+        btn2.setOnClickListener { textboxNewServer.setText(btn2.text) }
+        btn3.setOnClickListener { textboxNewServer.setText(btn3.text) }
+        btn4.setOnClickListener { textboxNewServer.setText(btn4.text) }
+        btn5.setOnClickListener { textboxNewServer.setText(btn5.text) }
+    }
+
+    // Set the connection button listener
+    private fun setConnectBtnListener() {
+        connectBtn.setOnClickListener {
+            baseUrl = textboxNewServer.text.toString()
+            toggleButton(true)
+
+            when (val err = Util.checkUrlValidity(baseUrl)) {
+                NO_ERROR -> checkConnection()
+                else -> {
+                    toast(err)
+                    toggleButton(false)
+                }
+            }
+        }
     }
 
     /*

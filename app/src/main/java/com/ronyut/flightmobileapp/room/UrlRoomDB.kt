@@ -6,6 +6,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+/*
+    This class is the Room database supervisor
+    Author: Rony Utevsky
+    Date: 23-06-2020
+ */
 @Database(entities = arrayOf(Url::class), version = 1, exportSchema = false)
 public abstract class UrlRoomDB : RoomDatabase() {
     abstract fun urlDao(): UrlDao
@@ -16,6 +21,7 @@ public abstract class UrlRoomDB : RoomDatabase() {
         @Volatile
         private var INSTANCE: UrlRoomDB? = null
 
+        // Get the db instance
         fun getDatabase(context: Context, scope: CoroutineScope): UrlRoomDB {
             val tempInstance = INSTANCE
             if (tempInstance != null) {
@@ -35,10 +41,10 @@ public abstract class UrlRoomDB : RoomDatabase() {
         }
     }
 
-    private class UrlDatabaseCallback(
-        private val scope: CoroutineScope
-    ) : RoomDatabase.Callback() {
+    // This class opens and populates the db
+    private class UrlDatabaseCallback(private val scope: CoroutineScope) : RoomDatabase.Callback() {
 
+        // Open the db
         override fun onOpen(db: SupportSQLiteDatabase) {
             super.onOpen(db)
             INSTANCE?.let { database ->
@@ -48,14 +54,9 @@ public abstract class UrlRoomDB : RoomDatabase() {
             }
         }
 
-        suspend fun populateDatabase(urlDao: UrlDao) {
+        // Here we can populate the db with dummy data
+        fun populateDatabase(urlDao: UrlDao) {
             val toAdd = urlDao.getLastUrls().value?.size ?: 5
-            /*for (i in 0 until toAdd) {
-                println("insert to DB sample")
-                val url = Url("Sample ${i + 1}", "now")
-                println("Url: " + url.url + " " + url.date)
-                urlDao.insert(url)
-            }*/
         }
     }
 }

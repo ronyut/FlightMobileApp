@@ -3,6 +3,7 @@ package com.ronyut.flightmobileapp
 import android.os.Bundle
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
+import com.ronyut.flightmobileapp.Util.Companion.CONSIDER_TEXT
 import com.ronyut.flightmobileapp.api.FlightData
 import com.ronyut.flightmobileapp.api.PicassoHandler
 import com.ronyut.flightmobileapp.api.RequestHandler
@@ -82,12 +83,12 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
         super.onRestart()
         println("Dashboard restarted")
 
-        if (jobScreenshot == null) {
+        if (jobScreenshot?.isCancelled!!) {
             jobScreenshot = Job()
             getScreenshot()
         }
 
-        if (jobPost == null) jobPost = Job()
+        if (jobPost?.isCancelled!!) jobPost = Job()
     }
 
     /*
@@ -104,7 +105,7 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
                 if (imageLoaded) {
                     imageLoaded = false
                     picasso.getImage(baseUrl, screenshot) { msg ->
-                        if (msg != null && jobScreenshot?.isActive!!) toast(msg + Util.CONSIDER_TEXT)
+                        if (msg != null && jobScreenshot?.isActive!!) toast(msg + CONSIDER_TEXT)
                         imageLoaded = true
                     }
                 }
@@ -122,7 +123,7 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
         jobPost = launch {
             jobPost?.ensureActive()
             requestHandler.postFlightData(flightData) { msg, isSuccess ->
-                if (!isSuccess && jobPost?.isActive!!) toast(msg + Util.CONSIDER_TEXT)
+                if (!isSuccess && jobPost?.isActive!!) toast(msg + CONSIDER_TEXT)
             }
         }
     }
