@@ -2,62 +2,44 @@ package com.ronyut.flightmobileapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.webkit.URLUtil.isValidUrl
+import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.ronyut.flightmobileapp.api.PicassoHandler
-import com.ronyut.flightmobileapp.room.Url
-import com.ronyut.flightmobileapp.room.UrlListAdapter
 import com.ronyut.flightmobileapp.room.UrlViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
 // TODO:
-//  save url
-//  landscape view
-//  vertical taskbar
-//  DONE                                                    check timeout erroring (screenshot)
-//  Update buttons on resume in this page
-//  sarah server + john server
+//  VVVVVVVVVVVVVVVVVVVVsave url
+//  VVVVVVVVVVV landscape view
+//  VVVVVVVVVVVVVVVVVVVvertical taskbar
+//  VVVVVVVVVVVVVVVVVVVVVV       check timeout erroring (screenshot)
+//  VVVVVVVVVV Update buttons on resume in this page
+//  VVVVVVVVVVV sarah server + john server
 //  coding style
-//  resolve all todos
+//  VVVVVVVVVVVVVV resolve all todos
+//  comments
+
 class MainActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_MESSAGE = "com.ronyut.flightmobileapp.URL"
         const val NO_ERROR = ""
     }
 
-    private lateinit var urlViewModel: UrlViewModel
+    private lateinit var toaster: Toaster
+    private lateinit var db: UrlDbManager
     private var baseUrl = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         supportActionBar?.hide()
+        db = UrlDbManager(applicationContext)
+        toaster = Toaster(applicationContext)
 
-        setRecycleView()
+        updateView()
         setConnectBtnListener()
-    }
-
-    private fun setRecycleView() {
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerview)
-        val adapter = UrlListAdapter(this)
-        recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        //urlViewModel = ViewModelProvider(this).get(UrlViewModel::class.java)
-        urlViewModel = ViewModelProvider(
-            this,
-            ViewModelProvider.AndroidViewModelFactory.getInstance(this.application)
-        ).get(UrlViewModel::class.java)
-
-        urlViewModel.allUrls.observe(this, Observer { urls ->
-            // Update the cached copy of the urls in the adapter.
-            urls?.let { adapter.setUrls(it) }
-        })
     }
 
     // set the connection button listener
@@ -66,7 +48,7 @@ class MainActivity : AppCompatActivity() {
             baseUrl = textboxNewServer.text.toString()
             toggleButton(true)
 
-            when (val err = checkUrlValidity()) {
+            when (val err = Util.checkUrlValidity(baseUrl)) {
                 NO_ERROR -> checkConnection()
                 else -> {
                     toast(err)
@@ -75,28 +57,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        testBtn.setOnClickListener {
-            val url = testBtn.text.toString()
-            saveUrl(url)
-            toast("added $url")
-        }
-    }
-
-    /*
-    Check if url is valid and show toast
-     */
-    private fun checkUrlValidity(): String {
-        var err = NO_ERROR
-
-        if (baseUrl == "") {
-            err = "Empty URL"
-        } else if (!isValidUrl(baseUrl)) {
-            err = "Invalid URL"
-        } else if (baseUrl.last().toString() == "/") {
-            err = "Please remove trailing slash from URL"
+        btn1.setOnClickListener {
+            textboxNewServer.setText(btn1.text)
         }
 
-        return err
+        btn2.setOnClickListener {
+            textboxNewServer.setText(btn2.text)
+        }
+
+        btn3.setOnClickListener {
+            textboxNewServer.setText(btn3.text)
+        }
+
+        btn4.setOnClickListener {
+            textboxNewServer.setText(btn4.text)
+        }
+
+        btn5.setOnClickListener {
+            textboxNewServer.setText(btn5.text)
+        }
     }
 
     /*
@@ -106,11 +85,9 @@ class MainActivity : AppCompatActivity() {
         val picasso = PicassoHandler(this)
         picasso.getImage(baseUrl, screenshotTest) { msg ->
             toggleButton(false)
-
             if (msg != null) {
-                toast(msg) // TODO: change to "server offline" / timeout
+                toast("Server unavailable")
             } else {
-                saveUrl()
                 connectionSuccessful()
             }
         }
@@ -120,6 +97,7 @@ class MainActivity : AppCompatActivity() {
     If the server is online, go to the dashboard
      */
     private fun connectionSuccessful() {
+        toast("Connected! Loading...")
         saveUrl()
         toggleButton(false)
         // move to dashboard activity
@@ -143,8 +121,40 @@ class MainActivity : AppCompatActivity() {
     Save the url in the database
      */
     private fun saveUrl(url: String = baseUrl) {
-        val link = Url(url, "now") // TODO CHANGE `NOW`
-        urlViewModel.insert(link)
+        db.addUrl(baseUrl)
+        updateView()
+    }
+
+    private fun updateView() {
+        val urls = db.getDb()
+        var last = 0
+        for ((i, url) in urls.withIndex()) {
+            println("Make visible: ${i + 1}")
+            when (i + 1) {
+                1 -> setBtn(btn1, url)
+                2 -> setBtn(btn2, url)
+                3 -> setBtn(btn3, url)
+                4 -> setBtn(btn4, url)
+                5 -> setBtn(btn5, url)
+            }
+            last = i + 1
+        }
+
+        for (i in last + 1 until 6) {
+            println("Make Gone: $i")
+            when (i) {
+                1 -> setBtn(btn1, "", View.GONE)
+                2 -> setBtn(btn2, "", View.GONE)
+                3 -> setBtn(btn3, "", View.GONE)
+                4 -> setBtn(btn4, "", View.GONE)
+                5 -> setBtn(btn5, "", View.GONE)
+            }
+        }
+    }
+
+    private fun setBtn(btn: Button, url: String, view: Int = View.VISIBLE) {
+        btn.text = url
+        btn.visibility = view
     }
 
     /*
@@ -161,6 +171,6 @@ class MainActivity : AppCompatActivity() {
     Make a toast
      */
     private fun toast(text: String?) {
-        Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()
+        toaster.toast(text)
     }
 }

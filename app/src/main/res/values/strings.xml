@@ -5,4 +5,5 @@
     <string name="home_textbox_url_placeholder">Type URL…</string>
 
     <string name="dashboard_textView_rudder">Rudder</string>
+    <string name="dashboard_textView_throttle">Throttle</string>
 </resources>

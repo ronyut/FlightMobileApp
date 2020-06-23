@@ -13,11 +13,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 
-class PicassoHandler(val context: Context, val isCheck: Boolean = false) {
-    private lateinit var picasso: Picasso
+class PicassoHandler(context: Context, val isCheck: Boolean = false) {
+    private var picasso: Picasso
 
     init {
-        val timeout = TIMEOUT_MS.toLong() + 500
+        val timeout = 4000L // for some reason 4 sec => 10 sec
 
         val okHttpClient = OkHttpClient.Builder()
             .connectTimeout(timeout, TimeUnit.MILLISECONDS)
@@ -37,7 +37,6 @@ class PicassoHandler(val context: Context, val isCheck: Boolean = false) {
             .into(imgView, object : com.squareup.picasso.Callback {
                 override fun onSuccess() {
                     onResult(null)
-                    println("Picasso OKAY!")
                 }
 
                 override fun onError(e: Exception?) {
@@ -45,9 +44,8 @@ class PicassoHandler(val context: Context, val isCheck: Boolean = false) {
                     println("-> ${e?.message}")
 
                     val msg = when (e) {
-                        is IOException -> "Server returned invalid image"
-                        is TimeoutException -> "Screenshot timeout"
-                        else -> "Could not fetch screenshot"
+                        is IOException -> "Server disconnected"
+                        else -> "Server disconnected (Error p_1)"
                     }
                     onResult(msg)
                 }

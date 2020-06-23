@@ -3,8 +3,10 @@ package com.ronyut.flightmobileapp.api
 import android.content.Context
 import com.android.volley.*
 import com.android.volley.toolbox.*
+import com.ronyut.flightmobileapp.Util
 import kotlin.coroutines.suspendCoroutine
 import org.json.JSONObject
+import java.io.IOException
 import java.util.concurrent.TimeoutException
 import kotlin.coroutines.resumeWithException
 
@@ -18,8 +20,8 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
     // Instantiate the RequestQueue.
     private val queue: RequestQueue = Volley.newRequestQueue(context)
 
-    suspend fun postFlightData(flightData: FlightData, onResult: (Int?) -> Unit): Unit =
-        suspendCoroutine { cont ->
+    suspend fun postFlightData(flightData: FlightData, onResult: (String?, Boolean) -> Unit): Unit =
+        suspendCoroutine {
             val url = baseUrl + URL_API_COMMAND
             println(">> URL: $url")
 
@@ -29,16 +31,21 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
                 Request.Method.POST, url, requestJson,
                 Response.Listener {
                     // get status code
-                    onResult(it?.getString("code")?.toInt())
+                    val code = it?.getString("code")?.toInt()
+                    var isSuccess = true
+                    if (code != 200) isSuccess = false
+                    onResult(Util.codeToText(code), isSuccess)
                 },
                 Response.ErrorListener { err ->
-                    val time = err.networkTimeMs / 1000
+                    val code = err?.networkResponse?.statusCode?.toInt()
                     val e = when {
-                        err.networkTimeMs > 9500 -> TimeoutException("Intermediate server timed out ($time seconds)")
-                        err.networkResponse?.statusCode == null -> Exception(err.message)
-                        else -> ServerUpException(err.networkResponse.statusCode.toString())
+                        err.networkTimeMs > 9500 -> TimeoutException("Intermediate server timed out")
+                        err is IOException -> Exception("Could not receive server's response")
+                        code != null -> Exception(Util.codeToText(code))
+                        else -> Exception("Corrupt response from server")
                     }
-                    cont.resumeWithException(e)
+                    //cont.resumeWithException(e)
+                    onResult(e.message, false)
                 })
 
             // set timeout to 10 seconds
