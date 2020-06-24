@@ -41,12 +41,16 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
                     onResult(Util.codeToText(code), isSuccess)
                 },
                 Response.ErrorListener { err ->
+                    // Printing exception details
+                    if (err != null) println("Post exception: ${err::class.qualifiedName}")
+                    println("-> ${err?.message}")
+
                     val code = err?.networkResponse?.statusCode
                     val msg = when {
                         err.networkTimeMs > MAX_NETWORK_TIME_MS -> "Intermediate server timed out"
-                        err is IOException -> "Could not receive server's response"
+                        err is IOException -> "Could not fetch server's response"
                         code != null -> Util.codeToText(code)
-                        else -> "Corrupt response from server"
+                        else -> null //
                     }
                     onResult(msg, false)
                 })

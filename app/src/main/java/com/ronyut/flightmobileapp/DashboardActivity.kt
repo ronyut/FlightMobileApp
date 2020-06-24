@@ -123,7 +123,7 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
         jobPost = launch {
             jobPost?.ensureActive()
             requestHandler.postFlightData(flightData) { msg, isSuccess ->
-                if (!isSuccess && jobPost?.isActive!!) toast(msg + CONSIDER_TEXT)
+                if (!isSuccess && msg != null && jobPost?.isActive!!) toast(msg + CONSIDER_TEXT)
             }
         }
     }
@@ -134,6 +134,7 @@ class DashboardActivity : AppCompatActivity(), JoypadView.Listener, CoroutineSco
     override fun onUp() {
         aileron = 0.0
         elevator = 0.0
+        sendFlightData()
     }
 
     /*

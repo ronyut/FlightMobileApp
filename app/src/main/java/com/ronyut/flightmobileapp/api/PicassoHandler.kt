@@ -24,15 +24,25 @@ class PicassoHandler(context: Context) {
     }
 
     init {
-        // set the http client once to timeout after 10 seconds
+        // add headers set the http client once to timeout after 10 seconds
         val okHttpClient = OkHttpClient.Builder()
+            /*.addInterceptor { chain ->
+                val newRequest = chain.request().newBuilder()
+                    .addHeader("Connection", "close")
+                    .build()
+                chain.proceed(newRequest)
+            }
+            .followRedirects(true)
+            .retryOnConnectionFailure(true)*/
             .connectTimeout(PICASSO_TIMEOUT, TimeUnit.MILLISECONDS)
             .readTimeout(PICASSO_TIMEOUT, TimeUnit.MILLISECONDS)
             .build()
 
         // set Picasso's http client
-
-        picasso = Picasso.Builder(context).downloader(OkHttp3Downloader(okHttpClient)).build()
+        picasso = Picasso.Builder(context)
+            .downloader(OkHttp3Downloader(okHttpClient))
+            //.indicatorsEnabled(true)
+            .build()
     }
 
     // Get image from url and inject into screenshot ImageView
@@ -56,7 +66,7 @@ class PicassoHandler(context: Context) {
                     println("-> ${e?.message}")
 
                     val msg = when (e) {
-                        is IOException -> "Server disconnected"
+                        is IOException -> "Could not fetch response from server"
                         else -> "Server disconnected (Error p_1)"
                     }
                     onResult(msg)
