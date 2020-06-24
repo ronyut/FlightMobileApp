@@ -7,4 +7,6 @@
     <string name="dashboard_textView_rudder">Rudder</string>
     <string name="dashboard_textView_throttle">Throttle</string>
     <string name="connect_btn_text_please_wait">Wait...</string>
+    <string name="rudder_default_value">0</string>
+    <string name="throttle_default_value">0</string>
 </resources>

@@ -44,11 +44,11 @@
                         android:id="@+id/rudder_val"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginRight="150dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="130dp"
                         android:layout_weight="20"
                         android:background="#000000"
-                        android:text="0"
+                        android:text="@string/rudder_default_value"
                         android:textAlignment="center"
                         android:textColor="#FFFFFF" />
                 </LinearLayout>
@@ -130,10 +130,10 @@
                                         android:id="@+id/throttle_val"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginLeft="35dp"
-                                        android:layout_marginRight="35dp"
+                                        android:layout_marginStart="35dp"
+                                        android:layout_marginEnd="35dp"
                                         android:background="#000000"
-                                        android:text="0"
+                                        android:text="@string/throttle_default_value"
                                         android:textAlignment="center"
                                         android:textColor="#FFFFFF" />
                                 </TableRow>

@@ -20,6 +20,7 @@ class Util {
                 302 -> "Flight Gear returned invalid value(s)"
                 304 -> "Not modified"
                 400 -> "Sent invalid parameters"
+                500 -> "Intermediate server internal error"
                 503 -> "FlightGear is not responding"
                 else -> "Something went wrong (Error u_0)"
             }
