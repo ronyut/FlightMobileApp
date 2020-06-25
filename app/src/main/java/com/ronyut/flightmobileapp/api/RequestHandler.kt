@@ -47,14 +47,13 @@ class RequestHandler(context: Context, private val baseUrl: String?) {
 
                     val code = err?.networkResponse?.statusCode
                     val msg = when {
+                        code != null -> Util.codeToText(code)
                         err.networkTimeMs > MAX_NETWORK_TIME_MS -> "Intermediate server timed out"
                         err is IOException -> "Could not fetch server's response"
-                        code != null -> Util.codeToText(code)
-                        else -> null //
+                        else -> null
                     }
                     onResult(msg, false)
                 })
-
             request = prepareTimeoutPolicy(request)
 
             // Add the request to the RequestQueue.

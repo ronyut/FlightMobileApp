@@ -15,27 +15,26 @@ import java.util.concurrent.TimeUnit
     Author: Rony Utevsky
     Date: 23-06-2020
  */
-class PicassoHandler(context: Context) {
+class PicassoHandler(context: Context, isCheck: Boolean = false) {
     private var picasso: Picasso
 
     companion object {
         // Set the timeout for some reason 4 sec => 10 sec
-        const val PICASSO_TIMEOUT = 4000L
+        const val PICASSO_TIMEOUT_CHECK = 500L
+        const val PICASSO_TIMEOUT_DEFAULT = 4000L // 10 seconds
     }
 
     init {
-        // add headers set the http client once to timeout after 10 seconds
+        // timeout after 10 seconds
+        val timeout = if (isCheck) {
+            PICASSO_TIMEOUT_CHECK
+        } else {
+            PICASSO_TIMEOUT_DEFAULT
+        }
+
         val okHttpClient = OkHttpClient.Builder()
-            /*.addInterceptor { chain ->
-                val newRequest = chain.request().newBuilder()
-                    .addHeader("Connection", "close")
-                    .build()
-                chain.proceed(newRequest)
-            }
-            .followRedirects(true)
-            .retryOnConnectionFailure(true)*/
-            .connectTimeout(PICASSO_TIMEOUT, TimeUnit.MILLISECONDS)
-            .readTimeout(PICASSO_TIMEOUT, TimeUnit.MILLISECONDS)
+            .connectTimeout(timeout, TimeUnit.MILLISECONDS)
+            .readTimeout(timeout, TimeUnit.MILLISECONDS)
             .build()
 
         // set Picasso's http client

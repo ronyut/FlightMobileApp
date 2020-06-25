@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     Check if the server is up
      */
     private fun checkConnection() {
-        val picasso = PicassoHandler(this)
+        val picasso = PicassoHandler(this, true)
         picasso.getImage(baseUrl, screenshotTest) { msg ->
             when {
                 msg != null -> {
