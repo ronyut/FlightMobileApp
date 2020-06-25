@@ -18,9 +18,9 @@ class Util {
             return when (code) {
                 200 -> "Success"
                 302 -> "Flight Gear returned invalid value(s)"
-                304 -> "Not modified"
-                400 -> "Sent invalid parameters"
-                500 -> "Intermediate server internal error"
+                304 -> "Server could not update simulator"
+                400 -> "Sent invalid parameters" // irrelevant
+                500 -> "Intermediate server internal error" // irrelevant
                 503 -> "FlightGear is not responding"
                 else -> "Something went wrong (Error u_0)"
             }
@@ -34,6 +34,8 @@ class Util {
 
             if (url == "") {
                 err = "Empty URL"
+            } else if (url.take(5) == "https") {
+                err = "HTTPS protocol is not supported"
             } else if (!URLUtil.isValidUrl(url)) {
                 err = "Invalid URL"
             } else if (url.last().toString() == "/") {
@@ -42,5 +44,9 @@ class Util {
 
             return err
         }
+
+        // Replace localhost
+        fun replaceLocalhost(url: String) = url.replace("localhost", "10.0.2.2")
+
     }
 }

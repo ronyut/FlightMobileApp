@@ -33,31 +33,41 @@
                     android:id="@+id/btn1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:height="80dp" />
+                    android:height="80dp"
+                    android:textAllCaps="false"
+                    android:textSize="24sp" />
 
                 <Button
                     android:id="@+id/btn2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textAllCaps="false"
+                    android:textSize="24sp"
                     android:height="80dp" />
 
                 <Button
                     android:id="@+id/btn3"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textAllCaps="false"
+                    android:textSize="24sp"
                     android:height="80dp" />
 
                 <Button
                     android:id="@+id/btn4"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textAllCaps="false"
+                    android:textSize="24sp"
                     android:height="80dp" />
 
                 <Button
                     android:id="@+id/btn5"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:height="80dp" />
+                    android:height="80dp"
+                    android:textSize="24sp"
+                    android:textAllCaps="false" />
 
             </LinearLayout>
 

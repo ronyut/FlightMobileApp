@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toaster: Toaster
     private lateinit var db: UrlDbManager
     private var baseUrl = ""
+    private var baseUrlLiteral = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,9 +47,11 @@ class MainActivity : AppCompatActivity() {
     private fun checkConnection() {
         val picasso = PicassoHandler(this)
         picasso.getImage(baseUrl, screenshotTest) { msg ->
-            toggleButton(false)
             when {
-                msg != null -> toast("Server unavailable")
+                msg != null -> {
+                    toast("Server unavailable")
+                    toggleButton(false)
+                }
                 else -> connectionSuccessful()
             }
         }
@@ -60,9 +63,9 @@ class MainActivity : AppCompatActivity() {
     private fun connectionSuccessful() {
         toast("Connected! Loading...")
         saveUrlToDb()
-        toggleButton(false)
         // move to dashboard activity
         moveToDashboard()
+        toggleButton(false)
     }
 
     /*
@@ -82,7 +85,7 @@ class MainActivity : AppCompatActivity() {
     Save the url in the database
      */
     private fun saveUrlToDb() {
-        db.addUrl(baseUrl)
+        db.addUrl(baseUrlLiteral)
         updateView()
     }
 
@@ -147,7 +150,10 @@ class MainActivity : AppCompatActivity() {
     // Set the connection button listener
     private fun setConnectBtnListener() {
         connectBtn.setOnClickListener {
-            baseUrl = textboxNewServer.text.toString()
+            val url = textboxNewServer.text.toString()
+            baseUrl = Util.replaceLocalhost(url)
+            baseUrlLiteral = url
+
             toggleButton(true)
 
             when (val err = Util.checkUrlValidity(baseUrl)) {
