@@ -9,4 +9,4 @@ For that, you will have to allow apps from unknown origin.
 <img src="assets/val.jpg" alt="Vertical" width="300"/>
 
 # Credits
-Rony Utevsky (@ronyut)
+@ronyut
